@@ -5,101 +5,64 @@
 
 <style>
 :root{
-  --accent:#7c3aed;
-  --bg:#0a0a0a;
-  --tile:#1a1a1a;
-  --text:white;
+ --accent:#7c3aed;
+ --bg:#0a0a0a;
+ --tile:#1a1a1a;
+ --text:white;
 }
 
 body{
-  margin:0;
-  font-family:Arial;
-  background:var(--bg);
-  color:var(--text);
-  transition:0.3s;
+ margin:0;
+ font-family:Arial;
+ background:var(--bg);
+ color:var(--text);
 }
 
-/* TOPBAR */
 .topbar{
-  display:flex;
-  justify-content:space-between;
-  padding:12px;
-  background:#111;
+ display:flex;
+ justify-content:space-between;
+ padding:10px;
+ background:#111;
 }
 
-/* BUTTONS */
 button{
-  background:rgba(255,255,255,0.05);
-  border:none;
-  padding:8px 14px;
-  color:white;
-  border-radius:10px;
-  cursor:pointer;
+ background:#222;
+ border:none;
+ padding:8px;
+ color:white;
+ border-radius:8px;
+ cursor:pointer;
 }
 button:hover{
-  background:var(--accent);
-  box-shadow:0 0 10px var(--accent);
+ background:var(--accent);
 }
 
-/* PAGES */
 .page{display:none;padding:20px;}
 .active{display:block;}
 
-/* HOME */
-.tiles{
-  display:flex;
-  gap:20px;
-}
-.tile{
-  padding:50px;
-  background:var(--tile);
-  border-radius:16px;
-  cursor:pointer;
-}
-.tile:hover{
-  transform:scale(1.05);
-  box-shadow:0 0 20px var(--accent);
-}
-
-/* GRID */
 .grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,150px);
-  gap:10px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,150px);
+ gap:10px;
 }
 
-/* GAME TILE */
 .game{
-  padding:12px;
-  background:var(--tile);
-  border-radius:10px;
-  cursor:pointer;
+ background:var(--tile);
+ padding:10px;
+ border-radius:10px;
+ cursor:pointer;
 }
 .game:hover{
-  background:var(--accent);
+ background:var(--accent);
 }
 
-/* VIEWER */
-#viewer{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:black;
-  display:none;
-}
-#viewer iframe{
-  width:100%;height:100%;
-  border:none;
-}
-
-/* SETTINGS */
 input,select{
-  padding:8px;
-  margin:5px;
-  border-radius:8px;
-  border:none;
-  background:#222;
-  color:white;
+ margin:5px;
+ padding:8px;
+ border-radius:6px;
+ border:none;
+ background:#222;
+ color:white;
 }
 </style>
 </head>
@@ -107,90 +70,52 @@ input,select{
 <body>
 
 <div class="topbar">
-  <span id="user"></span>
-  <div>
-    <button onclick="nav('home')">Home</button>
-    <button onclick="nav('games')">Games</button>
-    <button onclick="nav('proxy')">Proxy</button>
-    <button onclick="nav('settings')">Settings</button>
-  </div>
+<span id="user"></span>
+<div>
+<button onclick="nav('home')">Home</button>
+<button onclick="nav('games')">Games</button>
+<button onclick="nav('settings')">Customizer</button>
+</div>
 </div>
 
-<!-- HOME -->
 <div id="home" class="page active">
 <h2>Home</h2>
-<div class="tiles">
-  <div class="tile" onclick="nav('games')">🎮 Games</div>
-  <div class="tile" onclick="nav('proxy')">🌐 Proxy</div>
-  <div class="tile" onclick="nav('settings')">⚙️ Settings</div>
-</div>
-
-<h3>⭐ Favorites</h3>
 <div id="favorites" class="grid"></div>
 </div>
 
-<!-- GAMES -->
 <div id="games" class="page">
 <h2>Games</h2>
 
-<input id="search" placeholder="Search..." oninput="renderGames()">
+<select id="categoryFilter" onchange="renderGames()"></select>
 
-<h3>🔥 Recommended</h3>
-<div id="recommended" class="grid"></div>
-
-<h3>🎮 All Games</h3>
 <div id="gamesList" class="grid"></div>
-
-<button onclick="addGame()">➕ Add Game</button>
-<input type="file" id="fileInput">
 </div>
 
-<!-- PROXY -->
-<div id="proxy" class="page">
-<h2>Proxy</h2>
-<input id="proxyInput" placeholder="Enter URL">
-<button onclick="openProxy()">Go</button>
-</div>
-
-<!-- SETTINGS -->
 <div id="settings" class="page">
-<h2>Settings</h2>
+<h2>Customizer</h2>
 
-<h3>🎨 Theme Customizer</h3>
-<label>Accent</label><input type="color" onchange="setVar('--accent',this.value)">
-<label>Background</label><input type="color" onchange="setVar('--bg',this.value)">
-<label>Tile</label><input type="color" onchange="setVar('--tile',this.value)">
+<h3>🎨 Colors</h3>
+Accent<input type="color" onchange="setVar('--accent',this.value)">
+BG<input type="color" onchange="setVar('--bg',this.value)">
+Tile<input type="color" onchange="setVar('--tile',this.value)">
 
-<h3>🧩 UI Mode</h3>
-<select onchange="setMode(this.value)">
-<option value="grid">Grid</option>
-<option value="list">List</option>
-</select>
+<h3>📂 Categories</h3>
+<input id="newCat" placeholder="New category">
+<button onclick="addCategory()">Add</button>
 
-<h3>🕶️ Cloak</h3>
-<input id="cloakName" placeholder="Tab Name">
-<input id="cloakIcon" placeholder="Icon URL">
-<button onclick="applyCloak()">Apply</button>
+<div id="catList"></div>
 
-<h3>🚨 Panic</h3>
-<input id="panicKey" placeholder="Key">
-<input id="panicURL" placeholder="URL">
-<button onclick="savePanic()">Save</button>
-</div>
-
-<!-- VIEWER -->
-<div id="viewer">
-<button onclick="closeViewer()">❌</button>
-<iframe id="frame"></iframe>
+<h3>🎮 Add Game</h3>
+<input id="gName" placeholder="Name">
+<input id="gURL" placeholder="URL">
+<select id="gCat"></select>
+<button onclick="addGame()">Add Game</button>
 </div>
 
 <script>
 // ACCOUNT
-let user=localStorage.getItem("user");
-if(!user){
- user=prompt("Username:");
- localStorage.setItem("user",user);
-}
+let user=localStorage.getItem("user")||prompt("Username:");
+localStorage.setItem("user",user);
 document.getElementById("user").innerText=user;
 
 // NAV
@@ -199,143 +124,94 @@ function nav(p){
  document.getElementById(p).classList.add("active");
 }
 
-// GAME LIST (120+)
-let games=JSON.parse(localStorage.getItem("games"))||[];
-if(games.length===0){
- for(let i=1;i<=120;i++){
-  games.push({name:"Game "+i,url:"https://example.com"});
- }
+// STORAGE
+let categories=JSON.parse(localStorage.getItem("cats"))||["All"];
+let games=JSON.parse(localStorage.getItem("games"))||[
+ {name:"Slope",url:"https://slopegame.io",cat:"All"}
+];
+
+// SAVE
+function saveAll(){
+ localStorage.setItem("cats",JSON.stringify(categories));
+ localStorage.setItem("games",JSON.stringify(games));
 }
 
-// RENDER
-function renderGames(){
- let list=document.getElementById("gamesList");
- let rec=document.getElementById("recommended");
- list.innerHTML="";
- rec.innerHTML="";
+// CATEGORY
+function addCategory(){
+ let c=document.getElementById("newCat").value;
+ categories.push(c);
+ saveAll();
+ renderCats();
+}
 
- let search=document.getElementById("search").value.toLowerCase();
+// RENDER CATS
+function renderCats(){
+ let f=document.getElementById("categoryFilter");
+ let g=document.getElementById("gCat");
+ let list=document.getElementById("catList");
 
- games.forEach((g,i)=>{
-  if(!g.name.toLowerCase().includes(search))return;
+ f.innerHTML=""; g.innerHTML=""; list.innerHTML="";
 
-  let div=document.createElement("div");
-  div.className="game";
-  div.innerText=g.name;
+ categories.forEach(c=>{
+  f.innerHTML+=`<option>${c}</option>`;
+  g.innerHTML+=`<option>${c}</option>`;
 
-  div.onclick=()=>openViewer(g.url);
+  let d=document.createElement("div");
+  d.innerText=c;
 
-  div.oncontextmenu=(e)=>{
-   e.preventDefault();
-   addFav(g);
+  d.onclick=()=>{
+   if(confirm("Delete category?")){
+    categories=categories.filter(x=>x!==c);
+    saveAll();
+    renderCats();
+   }
   };
 
-  list.appendChild(div);
-
-  if(i<10){
-   let r=div.cloneNode(true);
-   rec.appendChild(r);
-  }
+  list.appendChild(d);
  });
 }
 
-// FAVORITES
-function addFav(g){
- let favs=JSON.parse(localStorage.getItem("favs"))||[];
- favs.push(g);
- localStorage.setItem("favs",JSON.stringify(favs));
- renderFavs();
-}
-
-function renderFavs(){
- let favs=JSON.parse(localStorage.getItem("favs"))||[];
- let box=document.getElementById("favorites");
- box.innerHTML="";
- favs.forEach(g=>{
-  let d=document.createElement("div");
-  d.className="game";
-  d.innerText=g.name;
-  d.onclick=()=>openViewer(g.url);
-  box.appendChild(d);
- });
-}
-
-// IMPORT
+// ADD GAME
 function addGame(){
- let name=prompt("Name");
- let url=prompt("URL");
- games.push({name,url});
- saveGames();
-}
+ let n=document.getElementById("gName").value;
+ let u=document.getElementById("gURL").value;
+ let c=document.getElementById("gCat").value;
 
-document.getElementById("fileInput").addEventListener("change",e=>{
- let f=e.target.files[0];
- let url=URL.createObjectURL(f);
- games.push({name:f.name,url});
- saveGames();
-});
-
-function saveGames(){
- localStorage.setItem("games",JSON.stringify(games));
+ games.push({name:n,url:u,cat:c});
+ saveAll();
  renderGames();
 }
 
-// VIEWER
-function openViewer(url){
- document.getElementById("viewer").style.display="block";
- document.getElementById("frame").src=url;
-}
-function closeViewer(){
- document.getElementById("viewer").style.display="none";
- document.getElementById("frame").src="";
+// RENDER GAMES
+function renderGames(){
+ let list=document.getElementById("gamesList");
+ list.innerHTML="";
+
+ let filter=document.getElementById("categoryFilter").value;
+
+ games.forEach(g=>{
+  if(filter && g.cat!==filter && filter!=="All")return;
+
+  let d=document.createElement("div");
+  d.className="game";
+  d.innerText=g.name;
+
+  d.onclick=()=>window.open(g.url);
+
+  list.appendChild(d);
+ });
 }
 
-// PROXY
-function openProxy(){
- openViewer(document.getElementById("proxyInput").value);
-}
-
-// THEME
+// COLORS
 function setVar(v,val){
  document.documentElement.style.setProperty(v,val);
  localStorage.setItem(v,val);
 }
 
-// MODE
-function setMode(m){
- document.body.style.fontSize = m==="list"?"18px":"14px";
-}
-
-// CLOAK
-function applyCloak(){
- document.title=document.getElementById("cloakName").value;
- let link=document.createElement("link");
- link.rel="icon";
- link.href=document.getElementById("cloakIcon").value;
- document.head.appendChild(link);
-}
-
-// PANIC
-let panicKey=localStorage.getItem("panicKey")||"`";
-let panicURL=localStorage.getItem("panicURL")||"https://google.com";
-
-function savePanic(){
- panicKey=document.getElementById("panicKey").value;
- panicURL=document.getElementById("panicURL").value;
- localStorage.setItem("panicKey",panicKey);
- localStorage.setItem("panicURL",panicURL);
-}
-
-document.addEventListener("keydown",e=>{
- if(e.key===panicKey){
-  window.location.href=panicURL;
- }
-});
-
 // LOAD
 window.onload=()=>{
+ renderCats();
  renderGames();
- renderFavs();
 
  ["--accent","--bg","--tile"].forEach(v=>{
   let val=localStorage.getItem(v);
