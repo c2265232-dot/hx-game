@@ -18,48 +18,77 @@ body{
  color:var(--text);
 }
 
+/* TOPBAR */
 .topbar{
  display:flex;
  justify-content:space-between;
- padding:10px;
+ padding:15px;
  background:#111;
 }
 
+/* BUTTONS */
 button{
- background:#222;
+ padding:10px 16px;
  border:none;
- padding:8px;
+ border-radius:10px;
+ background:#222;
  color:white;
- border-radius:8px;
  cursor:pointer;
 }
 button:hover{
  background:var(--accent);
+ box-shadow:0 0 10px var(--accent);
 }
 
+/* PAGES */
 .page{display:none;padding:20px;}
 .active{display:block;}
 
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fill,150px);
- gap:10px;
+/* HOME */
+.tiles{
+ display:flex;
+ gap:20px;
+}
+.tile{
+ padding:60px;
+ font-size:20px;
+ background:var(--tile);
+ border-radius:16px;
+ cursor:pointer;
+}
+.tile:hover{
+ box-shadow:0 0 20px var(--accent);
 }
 
+/* GRID */
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,160px);
+ gap:12px;
+}
+
+/* GAME */
 .game{
  background:var(--tile);
  padding:10px;
- border-radius:10px;
- cursor:pointer;
+ border-radius:12px;
+ cursor:grab;
+ text-align:center;
 }
 .game:hover{
  background:var(--accent);
 }
 
+img{
+ width:32px;
+ height:32px;
+}
+
+/* INPUTS */
 input,select{
- margin:5px;
  padding:8px;
- border-radius:6px;
+ margin:5px;
+ border-radius:8px;
  border:none;
  background:#222;
  color:white;
@@ -78,21 +107,43 @@ input,select{
 </div>
 </div>
 
+<!-- HOME -->
 <div id="home" class="page active">
 <h2>Home</h2>
-<div id="favorites" class="grid"></div>
+
+<div class="tiles">
+ <div class="tile" onclick="nav('games')">🎮 Games</div>
 </div>
 
+<h3>⭐ Favorites</h3>
+<div id="favorites" class="grid"></div>
+
+<h3>🔥 Recommended</h3>
+<div id="recommended" class="grid"></div>
+</div>
+
+<!-- GAMES -->
 <div id="games" class="page">
 <h2>Games</h2>
+
+<input id="search" placeholder="Search..." oninput="renderGames()">
 
 <select id="categoryFilter" onchange="renderGames()"></select>
 
 <div id="gamesList" class="grid"></div>
 </div>
 
+<!-- SETTINGS -->
 <div id="settings" class="page">
 <h2>Customizer</h2>
+
+<h3>🎨 Theme Presets</h3>
+<select onchange="setTheme(this.value)">
+<option value="dark">Dark</option>
+<option value="purple">Purple</option>
+<option value="blue">Blue</option>
+<option value="light">Light</option>
+</select>
 
 <h3>🎨 Colors</h3>
 Accent<input type="color" onchange="setVar('--accent',this.value)">
@@ -100,16 +151,14 @@ BG<input type="color" onchange="setVar('--bg',this.value)">
 Tile<input type="color" onchange="setVar('--tile',this.value)">
 
 <h3>📂 Categories</h3>
-<input id="newCat" placeholder="New category">
+<input id="newCat">
 <button onclick="addCategory()">Add</button>
-
-<div id="catList"></div>
 
 <h3>🎮 Add Game</h3>
 <input id="gName" placeholder="Name">
 <input id="gURL" placeholder="URL">
 <select id="gCat"></select>
-<button onclick="addGame()">Add Game</button>
+<button onclick="addGame()">Add</button>
 </div>
 
 <script>
@@ -124,85 +173,136 @@ function nav(p){
  document.getElementById(p).classList.add("active");
 }
 
-// STORAGE
+// DATA
 let categories=JSON.parse(localStorage.getItem("cats"))||["All"];
-let games=JSON.parse(localStorage.getItem("games"))||[
- {name:"Slope",url:"https://slopegame.io",cat:"All"}
-];
+let games=JSON.parse(localStorage.getItem("games"))||[];
+let favs=JSON.parse(localStorage.getItem("favs"))||[];
+
+if(games.length===0){
+ for(let i=1;i<=100;i++){
+  games.push({name:"Game "+i,url:"https://example.com",cat:"All"});
+ }
+}
 
 // SAVE
 function saveAll(){
  localStorage.setItem("cats",JSON.stringify(categories));
  localStorage.setItem("games",JSON.stringify(games));
+ localStorage.setItem("favs",JSON.stringify(favs));
 }
 
-// CATEGORY
-function addCategory(){
- let c=document.getElementById("newCat").value;
- categories.push(c);
+// FAVORITES
+function toggleFav(g){
+ let i=favs.findIndex(x=>x.name===g.name);
+ if(i>-1) favs.splice(i,1);
+ else favs.push(g);
  saveAll();
- renderCats();
+ renderFavs();
 }
 
-// RENDER CATS
-function renderCats(){
- let f=document.getElementById("categoryFilter");
- let g=document.getElementById("gCat");
- let list=document.getElementById("catList");
-
- f.innerHTML=""; g.innerHTML=""; list.innerHTML="";
-
- categories.forEach(c=>{
-  f.innerHTML+=`<option>${c}</option>`;
-  g.innerHTML+=`<option>${c}</option>`;
-
+// RENDER FAVS
+function renderFavs(){
+ let box=document.getElementById("favorites");
+ box.innerHTML="";
+ favs.forEach(g=>{
   let d=document.createElement("div");
-  d.innerText=c;
-
-  d.onclick=()=>{
-   if(confirm("Delete category?")){
-    categories=categories.filter(x=>x!==c);
-    saveAll();
-    renderCats();
-   }
-  };
-
-  list.appendChild(d);
+  d.className="game";
+  d.innerText=g.name;
+  d.onclick=()=>window.open(g.url);
+  box.appendChild(d);
  });
-}
-
-// ADD GAME
-function addGame(){
- let n=document.getElementById("gName").value;
- let u=document.getElementById("gURL").value;
- let c=document.getElementById("gCat").value;
-
- games.push({name:n,url:u,cat:c});
- saveAll();
- renderGames();
 }
 
 // RENDER GAMES
 function renderGames(){
  let list=document.getElementById("gamesList");
- list.innerHTML="";
+ let rec=document.getElementById("recommended");
 
+ list.innerHTML="";
+ rec.innerHTML="";
+
+ let search=document.getElementById("search").value.toLowerCase();
  let filter=document.getElementById("categoryFilter").value;
 
- games.forEach(g=>{
+ games.forEach((g,i)=>{
+  if(!g.name.toLowerCase().includes(search))return;
   if(filter && g.cat!==filter && filter!=="All")return;
 
   let d=document.createElement("div");
   d.className="game";
-  d.innerText=g.name;
+  d.draggable=true;
+
+  d.innerHTML=`<img src="https://www.google.com/s2/favicons?domain=${g.url}">
+               <br>${g.name}<br>⭐`;
 
   d.onclick=()=>window.open(g.url);
 
+  d.ondblclick=()=>toggleFav(g);
+
+  d.ondragstart=()=>dragIndex=i;
+  d.ondrop=()=>swap(i);
+  d.ondragover=e=>e.preventDefault();
+
   list.appendChild(d);
+
+  if(i<10){
+   let r=d.cloneNode(true);
+   rec.appendChild(r);
+  }
  });
 }
 
-// COLORS
+// DRAG
+let dragIndex=null;
+function swap(i){
+ [games[dragIndex],games[i]]=[games[i],games[dragIndex]];
+ saveAll();
+ renderGames();
+}
+
+// CATEGORY
+function addCategory(){
+ categories.push(document.getElementById("newCat").value);
+ saveAll();
+ renderCats();
+}
+
+function renderCats(){
+ let f=document.getElementById("categoryFilter");
+ let g=document.getElementById("gCat");
+
+ f.innerHTML=""; g.innerHTML="";
+ categories.forEach(c=>{
+  f.innerHTML+=`<option>${c}</option>`;
+  g.innerHTML+=`<option>${c}</option>`;
+ });
+}
+
+// ADD GAME
+function addGame(){
+ games.push({
+  name:document.getElementById("gName").value,
+  url:document.getElementById("gURL").value,
+  cat:document.getElementById("gCat").value
+ });
+ saveAll();
+ renderGames();
+}
+
+// THEME
+function setTheme(t){
+ if(t==="purple")setVar("--accent","#7c3aed");
+ if(t==="blue")setVar("--accent","#2563eb");
+ if(t==="light"){
+  setVar("--bg","#f5f5f5");
+  setVar("--text","black");
+ }
+ if(t==="dark"){
+  setVar("--bg","#0a0a0a");
+  setVar("--text","white");
+ }
+}
+
 function setVar(v,val){
  document.documentElement.style.setProperty(v,val);
  localStorage.setItem(v,val);
@@ -212,6 +312,7 @@ function setVar(v,val){
 window.onload=()=>{
  renderCats();
  renderGames();
+ renderFavs();
 
  ["--accent","--bg","--tile"].forEach(v=>{
   let val=localStorage.getItem(v);
