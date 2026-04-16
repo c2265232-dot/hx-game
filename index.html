@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0a0a0a;
+      color: white;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: #111;
+    }
+
+    .page {
+      display: none;
+      padding: 20px;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .tiles {
+      display: flex;
+      gap: 20px;
+    }
+
+    .tile {
+      padding: 40px;
+      background: #222;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: 0.2s;
+    }
+
+    .tile:hover {
+      transform: scale(1.05);
+    }
+
+    #gamesList div {
+      padding: 12px;
+      background: #222;
+      margin: 6px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    #viewer {
+      position: fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background:black;
+      display:none;
+    }
+
+    #viewer iframe {
+      width:100%;
+      height:100%;
+      border:none;
+    }
+
+    #viewer button {
+      position:absolute;
+      top:10px;
+      right:10px;
+      z-index:10;
+    }
+
+    input, button {
+      margin:5px;
+      padding:8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <span id="user"></span>
+
+  <div>
+    <button onclick="nav('home')">Home</button>
+    <button onclick="nav('games')">Games</button>
+    <button onclick="nav('proxy')">Proxy</button>
+    <button onclick="nav('settings')">Settings</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="home" class="page active">
+  <h2>Home</h2>
+  <div class="tiles">
+    <div class="tile" onclick="nav('games')">🎮 Games</div>
+    <div class="tile" onclick="nav('proxy')">🌐 Proxy</div>
+    <div class="tile" onclick="nav('settings')">⚙️ Settings</div>
+  </div>
+</div>
+
+<!-- GAMES -->
+<div id="games" class="page">
+  <h2>Games</h2>
+
+  <input id="search" placeholder="Search..." oninput="renderGames()">
+
+  <div id="gamesList"></div>
+
+  <button onclick="addGame()">➕ Add Game</button>
+  <input type="file" id="fileInput">
+</div>
+
+<!-- PROXY -->
+<div id="proxy" class="page">
+  <h2>Proxy</h2>
+  <input id="proxyInput" placeholder="Enter URL">
+  <button onclick="openProxy()">Go</button>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="page">
+  <h2>Settings</h2>
+
+  <h3>Theme</h3>
+  <input type="color" onchange="setColor(this.value)">
+
+  <h3>Cloak</h3>
+  <input id="cloakName" placeholder="Tab Name">
+  <input id="cloakIcon" placeholder="Icon URL">
+  <button onclick="applyCloak()">Apply</button>
+
+  <h3>Panic Button</h3>
+  <input id="panicKey" placeholder="Key">
+  <input id="panicURL" placeholder="Redirect URL">
+  <button onclick="savePanic()">Save</button>
+</div>
+
+<!-- VIEWER -->
+<div id="viewer">
+  <button onclick="closeViewer()">❌</button>
+  <iframe id="frame"></iframe>
+</div>
+
+<script>
+// ===== ACCOUNT =====
+let user = localStorage.getItem("user");
+if (!user) {
+  user = prompt("Enter username:");
+  localStorage.setItem("user", user);
+}
+document.getElementById("user").innerText = user;
+
+// ===== NAVIGATION =====
+function nav(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(page).classList.add("active");
+}
+
+// ===== GAMES =====
+let games = JSON.parse(localStorage.getItem("games")) || [
+  { name: "Slope", url: "https://slopegame.io" },
+  { name: "Run 3", url: "https://run3.io" },
+  { name: "Retro Bowl", url: "https://retrobowl.me" },
+  { name: "Drift Boss", url: "https://driftboss.io" },
+  { name: "1v1.LOL", url: "https://1v1.lol" }
+];
+
+function renderGames() {
+  let list = document.getElementById("gamesList");
+  list.innerHTML = "";
+
+  let search = document.getElementById("search").value.toLowerCase();
+
+  games.forEach(g => {
+    if (!g.name.toLowerCase().includes(search)) return;
+
+    let div = document.createElement("div");
+    div.innerText = g.name;
+
+    div.onclick = () => openViewer(g.url);
+
+    list.appendChild(div);
+  });
+}
+
+function addGame() {
+  let name = prompt("Game name:");
+  let url = prompt("Game URL:");
+
+  games.push({ name, url });
+  localStorage.setItem("games", JSON.stringify(games));
+  renderGames();
+}
+
+// FILE IMPORT
+document.getElementById("fileInput").addEventListener("change", function(e){
+  let file = e.target.files[0];
+  if (!file) return;
+
+  let url = URL.createObjectURL(file);
+
+  games.push({ name: file.name, url });
+  localStorage.setItem("games", JSON.stringify(games));
+  renderGames();
+});
+
+// ===== VIEWER =====
+function openViewer(url) {
+  document.getElementById("viewer").style.display = "block";
+  document.getElementById("frame").src = url;
+}
+
+function closeViewer() {
+  document.getElementById("viewer").style.display = "none";
+  document.getElementById("frame").src = "";
+}
+
+// ===== PROXY =====
+function openProxy() {
+  let url = document.getElementById("proxyInput").value;
+  openViewer(url);
+}
+
+// ===== CLOAK =====
+function applyCloak() {
+  let name = document.getElementById("cloakName").value;
+  let icon = document.getElementById("cloakIcon").value;
+
+  document.title = name;
+
+  let link = document.querySelector("link[rel~='icon']");
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+
+  link.href = icon;
+}
+
+// ===== PANIC BUTTON =====
+let panicKey = localStorage.getItem("panicKey") || "`";
+let panicURL = localStorage.getItem("panicURL") || "https://google.com";
+
+function savePanic() {
+  panicKey = document.getElementById("panicKey").value;
+  panicURL = document.getElementById("panicURL").value;
+
+  localStorage.setItem("panicKey", panicKey);
+  localStorage.setItem("panicURL", panicURL);
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === panicKey) {
+    window.location.href = panicURL;
+  }
+});
+
+// ===== THEME =====
+function setColor(color) {
+  document.body.style.background = color;
+  localStorage.setItem("color", color);
+}
+
+window.onload = () => {
+  renderGames();
+
+  let c = localStorage.getItem("color");
+  if (c) document.body.style.background = c;
+};
+</script>
+
+</body>
+</html>
